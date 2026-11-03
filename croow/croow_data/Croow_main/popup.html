@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C R W — Spatial Image Codec & Universal Studio</title>
+    <style>
+        :root {
+            --bg: #07090e;
+            --surface: #0e121a;
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #58a6ff;
+            --green: #2ea043;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0; padding: 25px 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            width: 780px;
+        }
+
+        header { text-align: center; margin-bottom: 25px; }
+        .logo { font-size: 26px; font-weight: 700; letter-spacing: 10px; text-indent: 10px; color: #fff; margin: 0 0 8px 0; }
+        .tagline { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        
+        .pill-bar { display: flex; gap: 6px; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
+        .pill {
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text-muted); padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-family: var(--font-mono);
+        }
+        .pill.active { color: var(--text-main); border-color: var(--accent); }
+
+        .grid { display: flex; gap: 20px; width: 100%; }
+        .card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; flex: 1; min-width: 0; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column;
+        }
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .card-title { font-size: 14px; font-weight: 600; margin: 0; }
+        .badge-chip {
+            font-family: var(--font-mono); font-size: 10px; padding: 2px 7px;
+            border-radius: 10px; background: rgba(88, 166, 255, 0.12); color: var(--accent);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .dropzone {
+            border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.015);
+            border-radius: 8px; padding: 30px 15px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .dropzone:hover { border-color: var(--accent); background: rgba(88, 166, 255, 0.05); }
+        .dropzone-title { font-size: 13px; font-weight: 500; margin: 0 0 4px 0; }
+        .dropzone-hint { font-size: 11px; color: var(--text-muted); margin: 0; font-family: var(--font-mono); }
+
+        canvas {
+            border-radius: 6px; border: 1px solid var(--border);
+            max-width: 100%; height: auto; margin-top: 14px; background: #000; align-self: center;
+        }
+
+        .stats-panel {
+            margin-top: 14px; font-family: var(--font-mono); font-size: 11px;
+            color: var(--text-muted); line-height: 1.7; background: rgba(0, 0, 0, 0.3);
+            padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border);
+        }
+        .stats-panel b { color: var(--text-main); }
+        .savings-tag { color: #3fb950; font-weight: 600; }
+
+        .palette-preview { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .palette-dot { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); }
+
+        .action-btn {
+            background: var(--text-main); color: var(--bg); border: none; padding: 10px 14px;
+            border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; width: 100%;
+            margin-top: 14px; transition: 0.2s;
+        }
+        .action-btn:hover { background: #fff; }
+        .loading-text { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">C R W</div>
+        <p class="tagline">Spatial Image Codec Core — Adaptive CRW5 Pipeline</p>
+        <div class="pill-bar">
+            <span class="pill active">Dynamic Median-Cut</span>
+            <span class="pill">Luminance Filtering</span>
+            <span class="pill">Native Deflate</span>
+            <span class="pill">MV3 Clean</span>
+        </div>
+    </header>
+
+    <div class="grid">
+        <!-- 1. ENCODER -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Fold to .CRW</h3>
+                <span class="badge-chip">ENCODER</span>
+            </div>
+
+            <div class="dropzone" id="drop-enc">
+                <p class="dropzone-title">Drop image to compress</p>
+                <p class="dropzone-hint">PNG, JPG, WebP supported</p>
+                <input type="file" id="file-enc" accept="image/*" style="display:none">
+            </div>
+            <div id="enc-loading" class="loading-text" style="display:none;">Processing & compressing image...</div>
+
+            <div id="enc-res" style="display:none;">
+                <div class="stats-panel" id="enc-stats"></div>
+                <div class="palette-preview" id="enc-palette"></div>
+                <canvas id="enc-canvas"></canvas>
+                <button class="action-btn" id="dl-btn">Download .CRW File</button>
+            </div>
+        </div>
+
+        <!-- 2. DECODER -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Universal Viewer</h3>
+                <span class="badge-chip">DECODER</span>
+            </div>
+
+            <div class="dropzone" id="drop-view">
+                <p class="dropzone-title">Drop any .crw binary</p>
+                <p class="dropzone-hint">Compatible with Python & JS CRW5</p>
+                <input type="file" id="file-view" accept=".crw" style="display:none">
+            </div>
+            <div id="view-loading" class="loading-text" style="display:none;">Decoding CRW stream...</div>
+
+            <div id="view-res" style="display:none; text-align:center;">
+                <div class="stats-panel" id="view-stats" style="text-align:left;"></div>
+                <canvas id="view-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

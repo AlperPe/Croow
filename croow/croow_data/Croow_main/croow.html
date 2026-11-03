@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C R W — Spatial Image Codec & Universal Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07090e;
+            --surface: #0e121a;
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #58a6ff;
+            --green: #2ea043;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0; padding: 40px 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        header { text-align: center; margin-bottom: 35px; }
+        .logo { font-size: 32px; font-weight: 700; letter-spacing: 12px; text-indent: 12px; color: #fff; margin: 0 0 10px 0; }
+        .tagline { font-size: 13px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        
+        .pill-bar { display: flex; gap: 8px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
+        .pill {
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text-muted); padding: 5px 12px; border-radius: 20px;
+            font-size: 12px; font-family: var(--font-mono);
+        }
+        .pill.active { color: var(--text-main); border-color: var(--accent); }
+
+        .grid { display: flex; gap: 25px; max-width: 1040px; width: 100%; flex-wrap: wrap; }
+        .card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 26px; flex: 1; min-width: 320px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            display: flex; flex-direction: column;
+        }
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+        }
+        .card-title { font-size: 15px; font-weight: 600; margin: 0; }
+        .badge-chip {
+            font-family: var(--font-mono); font-size: 11px; padding: 2px 8px;
+            border-radius: 12px; background: rgba(88, 166, 255, 0.12); color: var(--accent);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .dropzone {
+            border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.015);
+            border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .dropzone:hover { border-color: var(--accent); background: rgba(88, 166, 255, 0.05); }
+        .dropzone-title { font-size: 14px; font-weight: 500; margin: 0 0 6px 0; }
+        .dropzone-hint { font-size: 12px; color: var(--text-muted); margin: 0; font-family: var(--font-mono); }
+
+        canvas {
+            border-radius: 8px; border: 1px solid var(--border);
+            max-width: 100%; height: auto; margin-top: 18px; background: #000; align-self: center;
+        }
+
+        .stats-panel {
+            margin-top: 16px; font-family: var(--font-mono); font-size: 12px;
+            color: var(--text-muted); line-height: 1.8; background: rgba(0, 0, 0, 0.3);
+            padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .stats-panel b { color: var(--text-main); }
+        .savings-tag { color: #3fb950; font-weight: 600; }
+
+        .action-btn {
+            background: var(--text-main); color: var(--bg); border: none; padding: 12px 16px;
+            border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; width: 100%;
+            margin-top: 18px; transition: 0.2s;
+        }
+        .action-btn:hover { background: #fff; }
+        .loading-text { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">C R W</div>
+        <p class="tagline">Spatial Image Codec Core — Fast CRW5 Pipeline</p>
+        <div class="pill-bar">
+            <span class="pill active">Zero Deadlock</span>
+            <span class="pill">Luminance Filtering</span>
+            <span class="pill">Native Deflate Pipe</span>
+            <span class="pill">Safe Encoding</span>
+        </div>
+    </header>
+
+    <div class="grid">
+        <!-- 1. ENCODER -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Fold to .CRW</h3>
+                <span class="badge-chip">ENCODER</span>
+            </div>
+
+            <div class="dropzone" id="drop-enc">
+                <p class="dropzone-title">Drop image to compress</p>
+                <p class="dropzone-hint">PNG, JPG, WebP supported</p>
+                <input type="file" id="file-enc" accept="image/*" style="display:none">
+            </div>
+            <div id="enc-loading" class="loading-text" style="display:none;">Processing & compressing image...</div>
+
+            <div id="enc-res" style="display:none;">
+                <div class="stats-panel" id="enc-stats"></div>
+                <canvas id="enc-canvas"></canvas>
+                <button class="action-btn" id="dl-btn">Download .CRW File</button>
+            </div>
+        </div>
+
+        <!-- 2. DECODER -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Universal Viewer</h3>
+                <span class="badge-chip">DECODER</span>
+            </div>
+
+            <div class="dropzone" id="drop-view">
+                <p class="dropzone-title">Drop any .crw binary</p>
+                <p class="dropzone-hint">Instant high-fidelity render</p>
+                <input type="file" id="file-view" accept=".crw" style="display:none">
+            </div>
+            <div id="view-loading" class="loading-text" style="display:none;">Decoding CRW stream...</div>
+
+            <div id="view-res" style="display:none; text-align:center;">
+                <div class="stats-panel" id="view-stats" style="text-align:left;"></div>
+                <canvas id="view-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // COMPRESSION STREAM
+        async function compressData(byteArray) {
+            const stream = new Response(byteArray).body.pipeThrough(new CompressionStream('deflate'));
+            const res = await new Response(stream).arrayBuffer();
+            return new Uint8Array(res);
+        }
+
+        async function decompressData(byteArray) {
+            const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream('deflate'));
+            const res = await new Response(stream).arrayBuffer();
+            return new Uint8Array(res);
+        }
+
+        // ==========================================
+        // 1. DECODER
+        // ==========================================
+        async function decodeCRW5(buffer) {
+            try {
+                document.getElementById('view-loading').style.display = 'block';
+                const v = new DataView(buffer);
+                const magic = String.fromCharCode(v.getUint8(0), v.getUint8(1), v.getUint8(2), v.getUint8(3));
+                if (magic !== "CRW5") {
+                    alert("Only CRW5 files are supported!");
+                    document.getElementById('view-loading').style.display = 'none';
+                    return;
+                }
+
+                const orig_w = v.getUint16(4, false);
+                const orig_h = v.getUint16(6, false);
+                const base_w = v.getUint16(8, false);
+                const base_h = v.getUint16(10, false);
+
+                const pal_len = v.getUint8(12);
+                let off = 13;
+                const palette = [];
+                for (let i = 0; i < pal_len; i++) {
+                    palette.push([v.getUint8(off), v.getUint8(off+1), v.getUint8(off+2)]);
+                    off += 3;
+                }
+
+                const compressedBody = new Uint8Array(buffer, off);
+                const decompressedBody = await decompressData(compressedBody);
+
+                const dvBody = new DataView(decompressedBody.buffer);
+                const base_len = dvBody.getUint32(0, false);
+                let bodyOff = 4;
+                const base_payload = new Uint8Array(decompressedBody.buffer, bodyOff, base_len);
+                bodyOff += base_len;
+                const delta_len = dvBody.getUint32(bodyOff, false);
+                bodyOff += 4;
+                const delta_payload = new Uint8Array(decompressedBody.buffer, bodyOff, delta_len);
+
+                const total_base = base_w * base_h;
+                const base_pixels = [];
+                let bi = 0;
+                while (bi < base_payload.length && base_pixels.length < total_base) {
+                    const b = base_payload[bi++];
+                    if (b & 0x80) {
+                        const run = b & 0x7F;
+                        const val = base_payload[bi++];
+                        for (let r = 0; r < run; r++) base_pixels.push(val);
+                    } else {
+                        base_pixels.push(b);
+                    }
+                }
+
+                const offBase = document.createElement('canvas');
+                offBase.width = base_w; offBase.height = base_h;
+                const ctxBase = offBase.getContext('2d');
+                const baseImgData = ctxBase.createImageData(base_w, base_h);
+                for (let i = 0; i < total_base; i++) {
+                    const p = base_pixels[i] || 0;
+                    const rgb = palette[p] || [0, 0, 0];
+                    baseImgData.data[i*4] = rgb[0];
+                    baseImgData.data[i*4+1] = rgb[1];
+                    baseImgData.data[i*4+2] = rgb[2];
+                    baseImgData.data[i*4+3] = 255;
+                }
+                ctxBase.putImageData(baseImgData, 0, 0);
+
+                const offOrig = document.createElement('canvas');
+                offOrig.width = orig_w; offOrig.height = orig_h;
+                const ctxOrig = offOrig.getContext('2d');
+                ctxOrig.imageSmoothingEnabled = true; ctxOrig.imageSmoothingQuality = 'high';
+                ctxOrig.drawImage(offBase, 0, 0, orig_w, orig_h);
+
+                const finalData = ctxOrig.getImageData(0, 0, orig_w, orig_h);
+                const d = finalData.data;
+
+                let di = 0, pi = 0, total_bytes = orig_w * orig_h * 4;
+                while (di < delta_payload.length && pi < total_bytes) {
+                    const tag = delta_payload[di++];
+                    if (tag === 0x00) {
+                        const run = delta_payload[di++];
+                        pi += run * 4;
+                    } else if (tag === 0x01) {
+                        const dr = (delta_payload[di++] << 24) >> 24;
+                        const dg = (delta_payload[di++] << 24) >> 24;
+                        const db = (delta_payload[di++] << 24) >> 24;
+                        d[pi]   = Math.min(255, Math.max(0, d[pi] + dr));
+                        d[pi+1] = Math.min(255, Math.max(0, d[pi+1] + dg));
+                        d[pi+2] = Math.min(255, Math.max(0, d[pi+2] + db));
+                        pi += 4;
+                    }
+                }
+                ctxOrig.putImageData(finalData, 0, 0);
+
+                const cvs = document.getElementById('view-canvas');
+                const display_w = Math.min(480, orig_w);
+                const display_h = Math.round(orig_h * (display_w / orig_w));
+                cvs.width = display_w; cvs.height = display_h;
+                cvs.getContext('2d').drawImage(offOrig, 0, 0, display_w, display_h);
+
+                document.getElementById('view-stats').innerHTML = `
+                    Resolution: <b>${orig_w} × ${orig_h} px</b><br>
+                    Payload: <b>${Math.round(buffer.byteLength / 1024)} KB</b> (${buffer.byteLength} Bytes)<br>
+                    Status: <span class="savings-tag">✓ Reconstruction Active</span>
+                `;
+                document.getElementById('view-loading').style.display = 'none';
+                document.getElementById('view-res').style.display = 'block';
+            } catch (err) {
+                document.getElementById('view-loading').style.display = 'none';
+                alert("Decode Error: " + err.message);
+            }
+        }
+
+        const dropV = document.getElementById('drop-view');
+        const fileV = document.getElementById('file-view');
+        dropV.onclick = () => fileV.click();
+        dropV.ondragover = (e) => e.preventDefault();
+        dropV.ondrop = (e) => { e.preventDefault(); handleCrw(e.dataTransfer.files[0]); };
+        fileV.onchange = (e) => handleCrw(e.target.files[0]);
+
+        function handleCrw(file) {
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (e) => decodeCRW5(e.target.result);
+            r.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // 2. ENCODER
+        // ==========================================
+        const dropE = document.getElementById('drop-enc');
+        const fileE = document.getElementById('file-enc');
+        dropE.onclick = () => fileE.click();
+        dropE.ondragover = (e) => e.preventDefault();
+        dropE.ondrop = (e) => { e.preventDefault(); handleImage(e.dataTransfer.files[0]); };
+        fileE.onchange = (e) => handleImage(e.target.files[0]);
+
+        let generatedCrwBlob = null;
+
+        function handleImage(file) {
+            if (!file) return;
+            document.getElementById('enc-loading').style.display = 'block';
+            document.getElementById('enc-res').style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                const img = new Image();
+                img.onload = async () => {
+                    try {
+                        const orig_w = img.width;
+                        const orig_h = img.height;
+
+                        const cvsOrig = document.createElement('canvas');
+                        cvsOrig.width = orig_w; cvsOrig.height = orig_h;
+                        const ctxOrig = cvsOrig.getContext('2d');
+                        ctxOrig.drawImage(img, 0, 0);
+                        const orig_data = ctxOrig.getImageData(0, 0, orig_w, orig_h).data;
+
+                        const base_w = Math.min(orig_w, 256);
+                        const base_h = Math.round(orig_h * (base_w / orig_w));
+                        const cvsBase = document.createElement('canvas');
+                        cvsBase.width = base_w; cvsBase.height = base_h;
+                        const ctxBase = cvsBase.getContext('2d');
+                        ctxBase.drawImage(img, 0, 0, base_w, base_h);
+                        const base_data = ctxBase.getImageData(0, 0, base_w, base_h).data;
+
+                        const palette = [
+                            [15,15,20], [50,50,55], [90,95,100], [130,130,135],
+                            [170,175,180], [210,215,220], [245,245,250], [0,120,220],
+                            [220,50,50], [50,180,90], [230,180,40], [100,50,150],
+                            [160,80,40], [80,140,160], [240,120,180], [255,255,255]
+                        ];
+
+                        const base_indices = [];
+                        for (let i = 0; i < base_data.length; i += 4) {
+                            let minD = Infinity, best = 0;
+                            for (let r = 0; r < palette.length; r++) {
+                                const d = (base_data[i]-palette[r][0])**2 + (base_data[i+1]-palette[r][1])**2 + (base_data[i+2]-palette[r][2])**2;
+                                if (d < minD) { minD = d; best = r; }
+                            }
+                            base_indices.push(best);
+                        }
+
+                        const base_payload = [];
+                        let bi = 0;
+                        while (bi < base_indices.length) {
+                            const val = base_indices[bi];
+                            let run = 1;
+                            while (bi + run < base_indices.length && base_indices[bi + run] === val && run < 127) run++;
+                            if (run > 1) {
+                                base_payload.push(0x80 | run);
+                                base_payload.push(val);
+                                bi += run;
+                            } else {
+                                base_payload.push(val);
+                                bi++;
+                            }
+                        }
+
+                        for (let i = 0; i < base_indices.length; i++) {
+                            const rgb = palette[base_indices[i]];
+                            base_data[i*4] = rgb[0]; base_data[i*4+1] = rgb[1]; base_data[i*4+2] = rgb[2]; base_data[i*4+3] = 255;
+                        }
+                        ctxBase.putImageData(new ImageData(base_data, base_w, base_h), 0, 0);
+
+                        const cvsExp = document.createElement('canvas');
+                        cvsExp.width = orig_w; cvsExp.height = orig_h;
+                        const ctxExp = cvsExp.getContext('2d');
+                        ctxExp.imageSmoothingEnabled = true; ctxExp.imageSmoothingQuality = 'high';
+                        ctxExp.drawImage(cvsBase, 0, 0, orig_w, orig_h);
+                        const exp_data = ctxExp.getImageData(0, 0, orig_w, orig_h).data;
+
+                        const delta_payload = [];
+                        let zero_runs = 0;
+                        const total_pixels = orig_w * orig_h;
+
+                        for (let idx = 0; idx < total_pixels; idx++) {
+                            const p = idx * 4;
+                            const dr = orig_data[p] - exp_data[p];
+                            const dg = orig_data[p+1] - exp_data[p+1];
+                            const db = orig_data[p+2] - exp_data[p+2];
+                            const lumDiff = Math.abs(0.299 * dr + 0.587 * dg + 0.114 * db);
+
+                            if (lumDiff < 30) {
+                                zero_runs++;
+                                if (zero_runs === 255) {
+                                    delta_payload.push(0x00); delta_payload.push(255); zero_runs = 0;
+                                }
+                            } else {
+                                if (zero_runs > 0) {
+                                    delta_payload.push(0x00); delta_payload.push(zero_runs); zero_runs = 0;
+                                }
+                                delta_payload.push(0x01);
+                                delta_payload.push(Math.max(-128, Math.min(127, dr)) & 0xFF);
+                                delta_payload.push(Math.max(-128, Math.min(127, dg)) & 0xFF);
+                                delta_payload.push(Math.max(-128, Math.min(127, db)) & 0xFF);
+                            }
+                        }
+                        if (zero_runs > 0) { delta_payload.push(0x00); delta_payload.push(zero_runs); }
+
+                        // Deflate
+                        const rawBodyLen = 4 + base_payload.length + 4 + delta_payload.length;
+                        const rawBody = new Uint8Array(rawBodyLen);
+                        const dvRaw = new DataView(rawBody.buffer);
+
+                        dvRaw.setUint32(0, base_payload.length, false);
+                        rawBody.set(new Uint8Array(base_payload), 4);
+
+                        const deltaOff = 4 + base_payload.length;
+                        dvRaw.setUint32(deltaOff, delta_payload.length, false);
+                        rawBody.set(new Uint8Array(delta_payload), deltaOff + 4);
+
+                        const compressedBody = await compressData(rawBody);
+
+                        // Header + Body
+                        const headerLen = 4 + 8 + 1 + (palette.length * 3);
+                        const finalBuffer = new ArrayBuffer(headerLen + compressedBody.length);
+                        const v = new DataView(finalBuffer);
+
+                        v.setUint8(0, 67); v.setUint8(1, 82); v.setUint8(2, 87); v.setUint8(3, 53); // CRW5
+                        v.setUint16(4, orig_w, false); v.setUint16(6, orig_h, false);
+                        v.setUint16(8, base_w, false); v.setUint16(10, base_h, false);
+                        v.setUint8(12, palette.length);
+
+                        let offset = 13;
+                        for (let r = 0; r < palette.length; r++) {
+                            v.setUint8(offset++, palette[r][0]);
+                            v.setUint8(offset++, palette[r][1]);
+                            v.setUint8(offset++, palette[r][2]);
+                        }
+                        new Uint8Array(finalBuffer, headerLen).set(compressedBody);
+
+                        generatedCrwBlob = new Blob([finalBuffer], { type: 'application/octet-stream' });
+
+                        // Canvas Çizimi (Buradaki display_w değişkeni düzeltildi)
+                        const cvsEnc = document.getElementById('enc-canvas');
+                        const display_w = Math.min(480, orig_w);
+                        const display_h = Math.round(orig_h * (display_w / orig_w));
+                        cvsEnc.width = display_w; cvsEnc.height = display_h;
+                        cvsEnc.getContext('2d').drawImage(cvsOrig, 0, 0, display_w, display_h);
+
+                        const finalKB = Math.round(finalBuffer.byteLength / 1024);
+                        const origKB = Math.round(file.size / 1024);
+                        const savings = Math.max(0, Math.round((1 - (finalBuffer.byteLength / file.size)) * 100));
+
+                        document.getElementById('enc-stats').innerHTML = `
+                            Original File : <b>${origKB} KB</b> (${orig_w}×${orig_h})<br>
+                            .CRW5 Payload : <b>${finalKB} KB</b> (${finalBuffer.byteLength} Bytes)<br>
+                            Volume Delta  : <span class="savings-tag">-${savings}% OPTIMIZED</span>
+                        `;
+                        document.getElementById('enc-loading').style.display = 'none';
+                        document.getElementById('enc-res').style.display = 'block';
+                    } catch (err) {
+                        document.getElementById('enc-loading').style.display = 'none';
+                        alert("Encode Error: " + err.message);
+                    }
+                };
+                img.src = re.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('dl-btn').onclick = () => {
+            if(!generatedCrwBlob) return;
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(generatedCrwBlob);
+            a.download = 'render.crw';
+            a.click();
+        };
+    </script>
+</body>
+</html>
